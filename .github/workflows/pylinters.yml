@@ -1,0 +1,43 @@
+name: build
+
+on: [push]
+
+jobs:
+  isort-lint:
+    runs-on: ubuntu-latest
+    name: isort
+    steps:
+      - name: Checkout out source repository
+        uses: actions/checkout@v2
+      - name: Run isort
+        uses: isort/isort-action@master
+        with:
+          args: .
+  flake8-lint:
+    runs-on: ubuntu-latest
+    name: flake8
+    steps:
+      - name: Set up Python environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
+  black:
+    runs-on: ubuntu-latest
+    name: black
+    steps:
+      - uses: actions/checkout@v2
+      - uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+          src: .
+  mypy:
+    runs-on: ubuntu-latest
+    name: mypy
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jpetrucciani/mypy-check@master
+        with:
+          path: .
+          mypy_flags: "--ignore-missing-imports"
