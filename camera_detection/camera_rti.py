@@ -11,6 +11,7 @@ import cv2
 import logging as log
 import datetime as dt
 from time import sleep
+from infection_models import predictions
 
 
 face_cascade = cv2.CascadeClassifier(r'cascades/haarcascade_frontalface_default.xml')
@@ -40,9 +41,14 @@ while True:
         minSize=(30, 30)
     )
 
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
     # Draw a rectangle around the faces
-    for (x, y, w, h) in faces:
+    for i, (x, y, w, h) in enumerate(faces):
+        face_img = frame[y: y+h, x: x+w]
+        age, gender, ethnicity = predictions.predict(face_img)
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.putText(frame, gender + ' ' + age + ' ' + ethnicity, (x,y+h+25), font, 0.7, (0, 255, 0), 2, cv2.LINE_AA)
 
     if anterior != len(faces):
         anterior = len(faces)
