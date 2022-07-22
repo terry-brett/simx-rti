@@ -1,0 +1,5 @@
+cmake
+face_recognition
+scikit-learn
+tensorflow
+cv2

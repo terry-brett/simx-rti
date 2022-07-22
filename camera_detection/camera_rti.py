@@ -11,7 +11,7 @@ import cv2
 import logging as log
 import datetime as dt
 from time import sleep
-from infection_models import predictions
+from infection_models import demographic_prediction
 
 
 face_cascade = cv2.CascadeClassifier(r'cascades/haarcascade_frontalface_default.xml')
