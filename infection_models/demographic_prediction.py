@@ -1,19 +1,42 @@
-from keras.models import load_model
-import numpy as np
 import cv2
+import numpy as np
+from keras.models import load_model
 
-age_model = load_model('/Users/terrybrett/Documents/GitHub/simx-rti/.models/age-model.h5')
-gender_model = load_model('/Users/terrybrett/Documents/GitHub/simx-rti/.models/gen-model.h5')
-ethnicity_model = load_model('/Users/terrybrett/Documents/GitHub/simx-rti/.models/eth-model.h5')
+age_model = load_model(
+    "/Users/terrybrett/Documents/GitHub/simx-rti/.models/age-model.h5"
+)
+gender_model = load_model(
+    "/Users/terrybrett/Documents/GitHub/simx-rti/.models/gen-model.h5"
+)
+ethnicity_model = load_model(
+    "/Users/terrybrett/Documents/GitHub/simx-rti/.models/eth-model.h5"
+)
 
-gender_classes = ['male', 'female']
-age_classes = ['0-4', '5-9', '10-14', '15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54',
-               '55-59', '60-64', '65-69', '70-74', '75+']
-ethinicity_classes = ['white', 'black', 'asian', 'other']
+gender_classes = ["male", "female"]
+age_classes = [
+    "0-4",
+    "5-9",
+    "10-14",
+    "15-19",
+    "20-24",
+    "25-29",
+    "30-34",
+    "35-39",
+    "40-44",
+    "45-49",
+    "50-54",
+    "55-59",
+    "60-64",
+    "65-69",
+    "70-74",
+    "75+",
+]
+ethinicity_classes = ["white", "black", "asian", "other"]
 
-def predict(facial_image) -> [str, str, str]:
+
+def predict(facial_image) -> [int, int, int]:
     if not facial_image.any():
-        return 'can\'t predict', '', ''
+        return None, None, None
 
     img_arr = []
     image = cv2.resize(facial_image, (96, 96))
@@ -31,4 +54,4 @@ def predict(facial_image) -> [str, str, str]:
     ethnicity_pred = ethnicity_model.predict(img_arr)
     ethnicity_index = np.argmax(ethnicity_pred, axis=1)
 
-    return age_classes[age_index[0]], gender_classes[gender_index[0]], ethinicity_classes[ethnicity_index[0]]
+    return age_index[0], gender_index[0], ethnicity_index[0]

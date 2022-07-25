@@ -1,58 +1,46 @@
-import random
 import pandas as pd
+from scipy.spatial import distance
+
+from infection_models import demographic_prediction
+from node_info.types import Agent
+
 
 def read_file(filename) -> dict:
     data = {}
-    with open(filename, 'r+') as text:
+    with open(filename, "r+") as text:
         for line in text.readlines():
-            key, value = line.strip().split(',')
+            key, value = line.strip().split(",")
             data[key] = value
 
     return data
 
-def round_number(N, percentage) -> int:
-    return round((float(percentage)/100.) *N)
 
-def partition (list_in, n):
-    random.shuffle(list_in)
-    return [list_in[i::n] for i in range(n)]
+def round_number(N, percentage) -> int:
+    return round((float(percentage) / 100.0) * N)
+
 
 def load_susceptibility_matrix():
-    return pd.read_csv('../data/susceptibility_matrix.csv')
+    return pd.read_csv("../data/susceptibility_matrix.csv")
 
-def load_recovery_matrix():
-    return pd.read_csv('../data/recovery_matrix.csv')
 
 def get_susceptibility_matrix_index(age):
-    '''
-        The age matrix is 16x16 and it's split in groups of 4,
-        We can use whole division to quickly get the index
-    '''
+    """
+    The age matrix is 16x16 and it's split in groups of 4,
+    We can use whole division to quickly get the index
+    """
     if age >= 75:
         return 15
     else:
-        return age//5
+        return age // 5
 
-def get_recovery_rate(gender, age):
-    nodes_recovery = load_recovery_matrix()
 
-    if gender == 0:
-        column = 'male'
-    elif gender == 1:
-        column = 'female'
+def infection_rate(nodeA, nodeB, G):
+    dataframe = load_susceptibility_matrix()
 
-    if age <= 19:
-        return nodes_recovery[column][0]
-    elif age >= 60:
-        return nodes_recovery[column][5]
-    else:
-        return nodes_recovery[column][(age//10)-1]
-
-def infection_rate(nodeA, nodeB, G, dataframe):
-    ageA = G.nodes[nodeA]['age']
-    ageB = G.nodes[nodeB]['age']
-    gender = G.nodes[nodeA]['gender']
-    ethnicity = G.nodes[nodeA]['ethnicity']
+    ageA = G.nodes[nodeA]["age"]
+    ageB = G.nodes[nodeB]["age"]
+    gender = G.nodes[nodeA]["gender"]
+    ethnicity = G.nodes[nodeA]["ethnicity"]
 
     row = get_susceptibility_matrix_index(ageA)
     col = get_susceptibility_matrix_index(ageB)
@@ -60,43 +48,83 @@ def infection_rate(nodeA, nodeB, G, dataframe):
     age_infection_rate = dataframe.iloc[row, col]
 
     # infection probabilities for populations
-    gender_infection_rate = [0.17, 0.146] # male, female infection rates
-    population_infection_rate =[0.7392, 0.8618, 0.4927, 0.8799] # white, black, mixed, asian
+    gender_infection_rate = [0.17, 0.146]  # male, female infection rates
+    population_infection_rate = [
+        0.7392,
+        0.8618,
+        0.4927,
+        0.8799,
+    ]  # white, black, mixed, asian
 
-    return age_infection_rate * gender_infection_rate[gender] * population_infection_rate[ethnicity]
+    return (
+        age_infection_rate
+        + gender_infection_rate[gender]
+        + population_infection_rate[ethnicity]
+    ) / 3
 
-def recovery_rate(node,G):
-    age = G.nodes[node]['age']
-    gender = G.nodes[node]['gender']
-    ethnicity = G.nodes[node]['ethnicity']
 
-    population_recover_rate = [0.1585, 0.2910, 0.1923, 0.1585] # white, black, mixed, asian
+def add_to_network(G, agent):
+    if agent.id not in G:
+        G.add_node(agent.id)
+        G.nodes[agent.id]["age"] = agent.age
+        G.nodes[agent.id]["gender"] = agent.gender
+        G.nodes[agent.id]["ethnicity"] = agent.ethnicity
 
-    gender_recover_rate = get_recovery_rate(gender, age)
 
-    return gender_recover_rate * population_recover_rate[ethnicity]
+def connect(frame, x, y, G, faces, uses_camera=False):
+    for i in range(len(faces) - 1):
+        if not uses_camera:
+            agent_a_face_img = frame[
+                y: faces[i][1] + faces[i][3], x: faces[i][0] + faces[i][2]
+            ]
+            agent_b_face_img = frame[
+                y: faces[i + 1][1] + faces[i + 1][3],
+                x: faces[i + 1][0] + faces[i + 1][2],
+            ]
+        else:
+            agent_a_face_img = faces[0]
+            agent_b_face_img = faces[1]
 
-def infect(active_nodes, G, dataframe):
-    for n in active_nodes:
-        neighbors = list(G.neighbors(n))
-        if len(neighbors) > 0:
-            for neighbor in neighbors:
-                if G.nodes[n]['status'] == 'S':
-                    if random.uniform(0,1) < (infection_rate(n, neighbor, G, dataframe) - 0.076):
-                        G.nodes[n]['status'] = 'I'
+        age_a, gender_a, ethnicity_a = demographic_prediction.predict(
+            agent_a_face_img
+        )
+        age_b, gender_b, ethnicity_b = demographic_prediction.predict(
+            agent_b_face_img
+        )
 
-def recover(active_nodes, G):
-    for n in active_nodes:
-        if G.nodes[n]['status'] == 'I':
-            if random.uniform(0,1) < recovery_rate(n, G):
-                G.nodes[n]['status'] = 'S'
+        if (
+            age_a is not None
+            and age_b is not None
+            and gender_a is not None
+            and gender_b is not None
+            and ethnicity_a is not None
+            and ethnicity_b is not None
+        ):
+            agent_a = Agent(
+                id=i, age=age_a, gender=gender_a, ethnicity=ethnicity_a
+            )
+            agent_b = Agent(
+                id=i + 1, age=age_b, gender=gender_b, ethnicity=ethnicity_b
+            )
+            add_to_network(G, agent_a)
+            add_to_network(G, agent_b)
 
-def count_compartament_data(G):
-    dod = {} # dict of dicts
-    for node in G.nodes:
-        dod[node] = G.nodes[node]
-
-    df = pd.DataFrame(dod).transpose() # swap rows and columns
-    status_counts = df['status'].value_counts()
-
-    return status_counts.S, status_counts.I # return the number of susceptible and infected
+            if i < len(faces) - 1:
+                if not uses_camera:
+                    dist = distance.euclidean(faces[i][:2], faces[i + 1][:2])
+                else:
+                    dist = 120
+                if dist < 130:
+                    G.add_edge(agent_a.id, agent_b.id)
+                    agent_a.infection_rate = infection_rate(
+                        agent_a.id, agent_b.id, G
+                    )
+                    agent_b.infection_rate = infection_rate(
+                        agent_b.id, agent_a.id, G
+                    )
+                    G.nodes[agent_a.id][
+                        "infection_rate"
+                    ] = agent_a.infection_rate
+                    G.nodes[agent_b.id][
+                        "infection_rate"
+                    ] = agent_b.infection_rate

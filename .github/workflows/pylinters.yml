@@ -32,12 +32,3 @@ jobs:
         with:
           options: "--check --verbose"
           src: .
-  mypy:
-    runs-on: ubuntu-latest
-    name: mypy
-    steps:
-      - uses: actions/checkout@v2
-      - uses: jpetrucciani/mypy-check@master
-        with:
-          path: .
-          mypy_flags: "--ignore-missing-imports"

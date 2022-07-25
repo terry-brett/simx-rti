@@ -1,58 +1,73 @@
 import cv2
 import face_recognition
-from infection_models import demographic_prediction
-import math
+import networkx as nx
 
-def euclidean_dist(pA, pB):
-    return math.sqrt((pA[0] - pB[0]) ** 2 + (pA[1] - pB[1]) ** 2)
+from infection_models import demographic_prediction, helpers
 
-cap= cv2.VideoCapture('../examples/example_video2.mp4')
+cap = cv2.VideoCapture("../examples/example_video.mp4")
 
 faces = []
 
+# create an empty graph
+G = nx.Graph()
+
 while True:
-    # Grab a single frame of video
+    # grab a single frame of video
     ret, frame = cap.read()
-    # Convert the image from BGR color (which OpenCV uses) to RGB
-    # color (which face_recognition uses)
     rgb_frame = frame[:, :, ::-1]
-    # Find all the faces in the current frame of video
+    # find all the faces in the current frame of video
     faces = face_recognition.face_locations(rgb_frame)
 
     font = cv2.FONT_HERSHEY_SIMPLEX
-    points = []
-
-    MIN_DIST = 120
-    REF_DISTANCE = 50
-    REF_WIDTH = 50
-    REF_PIX = 306.36553955078125
 
     for i, (x, y, w, h) in enumerate(faces):
+
         face_img = frame[y: y + h, x: x + w]
-        age, gender, ethnicity = predictions.predict(face_img)
+        # make prediction
+        age, gender, ethnicity = demographic_prediction.predict(face_img)
 
-        #cv2.rectangle(frame, (h, x), (y, w), (0, 255, 0), 2)
-        cv2.putText(frame, gender + ' ' + age + ' ' + ethnicity, (h,w+20), font, 0.5, (0, 255, 0), 2, cv2.LINE_AA)
+        cv2.rectangle(frame, (h, x), (y, w), (0, 255, 0), 2)
+        text = ""
+        infection_text = ""
 
-        ratio_px_cm = REF_WIDTH / REF_PIX
-        center = (h+20, w - 20)
-        for p in points:
-            ed = euclidean_dist(p, center) * ratio_px_cm
-            color = (0, 255, 0)
-            if ed < MIN_DIST:
-                color = (0, 0, 255)
-            # draw a rectangle over each detected face
-            cv2.rectangle(frame, (h, x), (y, w), color, 2)
-            # put the distance as text over the face's rectangle
-            # draw a line between the faces detected
-            cv2.line(frame, center, p, color, 5)
-        points.append(center)
+        # check if all demographic features has been found
+        if age is not None and gender is not None and ethnicity is not None:
+            text = (
+                str(demographic_prediction.gender_classes[gender])
+                + " "
+                + str(demographic_prediction.age_classes[age])
+                + " "
+                + str(demographic_prediction.ethinicity_classes[ethnicity])
+            )
 
-    # Display the resulting image
-    cv2.imshow('Video', frame)
+            if i in G:
+                if "infection_rate" in G.nodes[i]:
+                    infection_text += (
+                        " "
+                        + str(round(G.nodes[i]["infection_rate"] * 100, 2))
+                        + "%"
+                    )
 
-    # Stop if escape key is pressed
-    k = cv2.waitKey(30) & 0xff
+        cv2.putText(
+            frame, text, (h, w + 20), font, 0.5, (0, 255, 0), 2, cv2.LINE_AA
+        )
+        cv2.putText(
+            frame,
+            infection_text,
+            (h - 10, w + 40),
+            font,
+            0.5,
+            (0, 255, 0),
+            2,
+            cv2.LINE_AA,
+        )
+        helpers.connect(frame, x, y, G, faces)
+
+    # display the resulting image
+    cv2.imshow("Video", frame)
+
+    # stop if escape key is pressed
+    k = cv2.waitKey(30) & 0xFF
     if k == 27:
         break
 
