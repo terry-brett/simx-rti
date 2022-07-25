@@ -75,22 +75,18 @@ def connect(frame, x, y, G, faces, uses_camera=False):
     for i in range(len(faces) - 1):
         if not uses_camera:
             agent_a_face_img = frame[
-                y: faces[i][1] + faces[i][3], x: faces[i][0] + faces[i][2]
+                y : faces[i][1] + faces[i][3], x : faces[i][0] + faces[i][2]
             ]
             agent_b_face_img = frame[
-                y: faces[i + 1][1] + faces[i + 1][3],
-                x: faces[i + 1][0] + faces[i + 1][2],
+                y : faces[i + 1][1] + faces[i + 1][3],
+                x : faces[i + 1][0] + faces[i + 1][2],
             ]
         else:
             agent_a_face_img = faces[0]
             agent_b_face_img = faces[1]
 
-        age_a, gender_a, ethnicity_a = demographic_prediction.predict(
-            agent_a_face_img
-        )
-        age_b, gender_b, ethnicity_b = demographic_prediction.predict(
-            agent_b_face_img
-        )
+        age_a, gender_a, ethnicity_a = demographic_prediction.predict(agent_a_face_img)
+        age_b, gender_b, ethnicity_b = demographic_prediction.predict(agent_b_face_img)
 
         if (
             age_a is not None
@@ -100,12 +96,8 @@ def connect(frame, x, y, G, faces, uses_camera=False):
             and ethnicity_a is not None
             and ethnicity_b is not None
         ):
-            agent_a = Agent(
-                id=i, age=age_a, gender=gender_a, ethnicity=ethnicity_a
-            )
-            agent_b = Agent(
-                id=i + 1, age=age_b, gender=gender_b, ethnicity=ethnicity_b
-            )
+            agent_a = Agent(id=i, age=age_a, gender=gender_a, ethnicity=ethnicity_a)
+            agent_b = Agent(id=i + 1, age=age_b, gender=gender_b, ethnicity=ethnicity_b)
             add_to_network(G, agent_a)
             add_to_network(G, agent_b)
 
@@ -116,15 +108,7 @@ def connect(frame, x, y, G, faces, uses_camera=False):
                     dist = 120
                 if dist < 130:
                     G.add_edge(agent_a.id, agent_b.id)
-                    agent_a.infection_rate = infection_rate(
-                        agent_a.id, agent_b.id, G
-                    )
-                    agent_b.infection_rate = infection_rate(
-                        agent_b.id, agent_a.id, G
-                    )
-                    G.nodes[agent_a.id][
-                        "infection_rate"
-                    ] = agent_a.infection_rate
-                    G.nodes[agent_b.id][
-                        "infection_rate"
-                    ] = agent_b.infection_rate
+                    agent_a.infection_rate = infection_rate(agent_a.id, agent_b.id, G)
+                    agent_b.infection_rate = infection_rate(agent_b.id, agent_a.id, G)
+                    G.nodes[agent_a.id]["infection_rate"] = agent_a.infection_rate
+                    G.nodes[agent_b.id]["infection_rate"] = agent_b.infection_rate

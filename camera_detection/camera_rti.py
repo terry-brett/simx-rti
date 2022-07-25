@@ -18,9 +18,7 @@ import networkx as nx
 
 from infection_models import demographic_prediction, helpers
 
-face_cascade = cv2.CascadeClassifier(
-    r"cascades/haarcascade_frontalface_default.xml"
-)
+face_cascade = cv2.CascadeClassifier(r"cascades/haarcascade_frontalface_default.xml")
 
 cap = cv2.VideoCapture(0)
 
@@ -56,7 +54,7 @@ while True:
 
     # Draw a rectangle around the faces
     for i, (x, y, w, h) in enumerate(faces):
-        face_img = frame[y: y + h, x: x + w]
+        face_img = frame[y : y + h, x : x + w]
         if face_img not in face_img_list:
             face_img_list.append(face_img)
         age, gender, ethnicity = demographic_prediction.predict(face_img)
@@ -72,9 +70,7 @@ while True:
             if i in G:
                 if "infection_rate" in G.nodes[i]:
                     infection_text += (
-                        " "
-                        + str(round(G.nodes[i]["infection_rate"] * 100, 2))
-                        + "%"
+                        " " + str(round(G.nodes[i]["infection_rate"] * 100, 2)) + "%"
                     )
 
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -102,9 +98,7 @@ while True:
 
     if anterior != len(faces):
         anterior = len(faces)
-        log.info(
-            "faces: " + str(len(faces)) + " at " + str(dt.datetime.now())
-        )
+        log.info("faces: " + str(len(faces)) + " at " + str(dt.datetime.now()))
 
     # Display the resulting frame
     cv2.imshow("Video", frame)

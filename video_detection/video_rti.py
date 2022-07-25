@@ -22,7 +22,7 @@ while True:
 
     for i, (x, y, w, h) in enumerate(faces):
 
-        face_img = frame[y: y + h, x: x + w]
+        face_img = frame[y : y + h, x : x + w]
         # make prediction
         age, gender, ethnicity = demographic_prediction.predict(face_img)
 
@@ -43,14 +43,10 @@ while True:
             if i in G:
                 if "infection_rate" in G.nodes[i]:
                     infection_text += (
-                        " "
-                        + str(round(G.nodes[i]["infection_rate"] * 100, 2))
-                        + "%"
+                        " " + str(round(G.nodes[i]["infection_rate"] * 100, 2)) + "%"
                     )
 
-        cv2.putText(
-            frame, text, (h, w + 20), font, 0.5, (0, 255, 0), 2, cv2.LINE_AA
-        )
+        cv2.putText(frame, text, (h, w + 20), font, 0.5, (0, 255, 0), 2, cv2.LINE_AA)
         cv2.putText(
             frame,
             infection_text,
