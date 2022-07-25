@@ -47,14 +47,14 @@ def infection_rate(nodeA, nodeB, G):
 
     age_infection_rate = dataframe.iloc[row, col]
 
-    # infection probabilities for populations
-    gender_infection_rate = [0.17, 0.146]  # male, female infection rates
-    population_infection_rate = [
-        0.7392,
-        0.8618,
-        0.4927,
-        0.8799,
-    ]  # white, black, mixed, asian
+    # Probably a lot you need to change if we do this, but I think it makes more sense for these to be dictionaries instead of lists. That way gender/ethnicity will not just be an int.
+    gender_infection_rate = { "male": 0.17, "female": 0.146}
+    population_infection_rate = {
+        "white": 0.7392,
+        "black": 0.8618,
+        "mixed": 0.4927,
+        "asian": 0.8799,
+    } 
 
     return (
         age_infection_rate
@@ -91,17 +91,18 @@ def connect(frame, x, y, G, faces, uses_camera=False):
         if (
             age_a is not None
             and age_b is not None
-            and gender_a is not None
-            and gender_b is not None
-            and ethnicity_a is not None
-            and ethnicity_b is not None
+            # I think we can remove these if gender/ethnicity are enums/strings instead of ints
+            and gender_a
+            and gender_b
+            and ethnicity_a
+            and ethnicity_b
         ):
             agent_a = Agent(id=i, age=age_a, gender=gender_a, ethnicity=ethnicity_a)
             agent_b = Agent(id=i + 1, age=age_b, gender=gender_b, ethnicity=ethnicity_b)
             add_to_network(G, agent_a)
             add_to_network(G, agent_b)
 
-            if i < len(faces) - 1:
+            if i < len(faces) - 1: # Will this if-check always be true or am I drunk?
                 if not uses_camera:
                     dist = distance.euclidean(faces[i][:2], faces[i + 1][:2])
                 else:

@@ -13,7 +13,8 @@ G = nx.Graph()
 
 while True:
     # grab a single frame of video
-    ret, frame = cap.read()
+    # Python convention is to use underscore when a value is not used. "ret" is not used as far as I can see.
+    _, frame = cap.read()
     rgb_frame = frame[:, :, ::-1]
     # find all the faces in the current frame of video
     faces = face_recognition.face_locations(rgb_frame)
@@ -31,7 +32,7 @@ while True:
         infection_text = ""
 
         # check if all demographic features has been found
-        if age is not None and gender is not None and ethnicity is not None:
+        if age and gender and ethnicity:
             text = (
                 str(demographic_prediction.gender_classes[gender])
                 + " "

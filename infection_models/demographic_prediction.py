@@ -1,8 +1,10 @@
+from typing import Tuple
 import cv2
 import numpy as np
 from keras.models import load_model
 
 age_model = load_model(
+    # These paths should probably be command line arguments instead of hardcoded paths.
     "/Users/terrybrett/Documents/GitHub/simx-rti/.models/age-model.h5"
 )
 gender_model = load_model(
@@ -34,7 +36,7 @@ age_classes = [
 ethinicity_classes = ["white", "black", "asian", "other"]
 
 
-def predict(facial_image) -> [int, int, int]:
+def predict(facial_image) -> Tuple[int, int, int]:
     if not facial_image.any():
         return None, None, None
 
