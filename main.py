@@ -10,7 +10,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Run the program with file input or camers"
+        description="Run the program with file input or camera"
     )
 
     parser.add_argument(

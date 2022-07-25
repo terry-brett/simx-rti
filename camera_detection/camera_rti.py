@@ -37,7 +37,7 @@ while True:
         pass
 
     # Capture frame-by-frame
-    ret, frame = video_capture.read()
+    _, frame = video_capture.read()
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -70,7 +70,7 @@ while True:
             if i in G:
                 if "infection_rate" in G.nodes[i]:
                     infection_text += (
-                        " " + str(round(G.nodes[i]["infection_rate"] * 100, 2)) + "%"
+                        " " + f"{G.nodes[i]['infection_rate']:.0%}" + "%"
                     )
 
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
